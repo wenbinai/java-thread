@@ -22,7 +22,7 @@ public class BlockingQueue {
     public void put(Object item) throws InterruptedException {
 
         synchronized (this) {
-            if (count == items.length) {
+            while (count == items.length) {
                 System.out.println("队列已满, 还不能生产");
                 this.wait();
             }
@@ -34,7 +34,7 @@ public class BlockingQueue {
 
     public Object take() throws InterruptedException {
         synchronized (this) {
-            if (count == 0) {
+            while (count == 0) {
                 System.out.println("队列为空, 还不能消费");
                 this.wait();
             }
