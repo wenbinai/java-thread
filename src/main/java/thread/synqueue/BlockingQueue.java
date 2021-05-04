@@ -20,30 +20,32 @@ public class BlockingQueue {
     }
 
     public void put(Object item) throws InterruptedException {
-        while (true) {
-            synchronized (this) {
-                if (count != items.length) {
-                    enqueue(item);
-                    break;
-                }
+
+        synchronized (this) {
+            if (count == items.length) {
+                System.out.println("队列已满, 还不能生产");
+                this.wait();
             }
-            System.out.println("队列已满, 还不能生产");
-            Thread.sleep(200L);
+            enqueue(item);
+            // 唤醒消费者线程
+            this.notifyAll();
         }
-
-
     }
 
     public Object take() throws InterruptedException {
-        while (true) {
-            synchronized (this) {
-                if (count != 0) {
-                    return dequeue();
-                }
+        synchronized (this) {
+            if (count == 0) {
+                System.out.println("队列为空, 还不能消费");
+                this.wait();
             }
-            System.out.println("队列为空, 还不能消费");
-            Thread.sleep(200L);
+
+            Object item = dequeue();
+            // 唤醒所有的消费者线程
+            this.notifyAll();
+            return item;
         }
+
+
     }
 
     private void enqueue(Object item) {
