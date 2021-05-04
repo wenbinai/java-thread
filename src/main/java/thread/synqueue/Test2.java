@@ -6,8 +6,8 @@ import java.util.List;
 public class Test2 {
     public static void main(String[] args) throws InterruptedException {
         final BlockingQueue q = new BlockingQueue(2);
-        final int threads = 2;
-        final int times = 10;
+        final int threads = 400;
+        final int times = 100;
         List<Thread> threadList = new ArrayList<Thread>(threads * 2);
         long startTime = System.currentTimeMillis();
 

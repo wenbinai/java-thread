@@ -13,7 +13,8 @@ public class BlockingQueue {
     private int takeIndex;
 
     private final ReentrantLock lock = new ReentrantLock();
-    private final Condition condition = lock.newCondition();
+    private final Condition notFull = lock.newCondition();
+    private final Condition notEmpty = lock.newCondition();
 
     public BlockingQueue(int capacity) {
         if (capacity <= 0) {
@@ -30,11 +31,11 @@ public class BlockingQueue {
         try {
             while (count == items.length) {
                 System.out.println("队列已满, 还不能生产");
-                condition.await();
+                notFull.await();
             }
             enqueue(item);
             // 唤醒消费者线程
-            condition.signalAll();
+            notEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -45,12 +46,12 @@ public class BlockingQueue {
         try {
             while (count == 0) {
                 System.out.println("队列为空, 还不能消费");
-                condition.await();
+                notEmpty.await();
             }
 
             Object item = dequeue();
             // 唤醒所有的消费者线程
-            condition.signalAll();
+            notFull.signalAll();
             return item;
         } finally {
             lock.unlock();
