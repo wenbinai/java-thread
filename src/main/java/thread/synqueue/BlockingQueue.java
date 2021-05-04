@@ -21,9 +21,11 @@ public class BlockingQueue {
 
     public void put(Object item) throws InterruptedException {
         while (true) {
-            if (count != items.length) {
-                enqueue(item);
-                break;
+            synchronized (this) {
+                if (count != items.length) {
+                    enqueue(item);
+                    break;
+                }
             }
             System.out.println("队列已满, 还不能生产");
             Thread.sleep(200L);
@@ -34,8 +36,10 @@ public class BlockingQueue {
 
     public Object take() throws InterruptedException {
         while (true) {
-            if (count != 0) {
-                return dequeue();
+            synchronized (this) {
+                if (count != 0) {
+                    return dequeue();
+                }
             }
             System.out.println("队列为空, 还不能消费");
             Thread.sleep(200L);

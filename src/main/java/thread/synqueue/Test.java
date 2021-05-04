@@ -3,11 +3,10 @@ package thread.synqueue;
 public class Test {
     public static void main(String[] args) {
         BlockingQueue q = new BlockingQueue(5);
+        new Thread(new Producer(q)).start();
         for (int i = 0; i < 3; i++) {
-            new Thread(new Producer(q)).start();
             new Thread(new Customer(q)).start();
         }
-
     }
 }
 
