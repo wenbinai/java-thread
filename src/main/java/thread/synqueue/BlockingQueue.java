@@ -1,5 +1,8 @@
 package thread.synqueue;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * 从零开始实现自己的阻塞队列
  */
@@ -8,6 +11,9 @@ public class BlockingQueue {
     private int count;
     private int putIndex;
     private int takeIndex;
+
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
     public BlockingQueue(int capacity) {
         if (capacity <= 0) {
@@ -20,29 +26,34 @@ public class BlockingQueue {
     }
 
     public void put(Object item) throws InterruptedException {
-
-        synchronized (this) {
+        lock.lockInterruptibly();
+        try {
             while (count == items.length) {
                 System.out.println("队列已满, 还不能生产");
-                this.wait();
+                condition.await();
             }
             enqueue(item);
             // 唤醒消费者线程
-            this.notifyAll();
+            condition.signalAll();
+        } finally {
+            lock.unlock();
         }
     }
 
     public Object take() throws InterruptedException {
-        synchronized (this) {
+        lock.lockInterruptibly();
+        try {
             while (count == 0) {
                 System.out.println("队列为空, 还不能消费");
-                this.wait();
+                condition.await();
             }
 
             Object item = dequeue();
             // 唤醒所有的消费者线程
-            this.notifyAll();
+            condition.signalAll();
             return item;
+        } finally {
+            lock.unlock();
         }
 
 
