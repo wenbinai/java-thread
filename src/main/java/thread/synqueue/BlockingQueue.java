@@ -30,6 +30,7 @@ public class BlockingQueue {
     }
 
     public void put(Object item) throws InterruptedException {
+        int c = -1;
         putLock.lockInterruptibly();
         try {
             while (count.get() == items.length) {
@@ -37,11 +38,17 @@ public class BlockingQueue {
                 notFull.await();
             }
             enqueue(item);
+
+            c = count.getAndIncrement();
+            if (c + 1 < items.length) {
+                notFull.signal();
+            }
         } finally {
             putLock.unlock();
         }
         // 唤醒消费者线程 (防止死锁)
-        signNotEmpty();
+        if (c == 0)
+            signNotEmpty();
     }
 
     private void signNotEmpty() {
@@ -56,6 +63,7 @@ public class BlockingQueue {
 
     public Object take() throws InterruptedException {
         Object item;
+        int c = -1;
         takeLock.lockInterruptibly();
         try {
             while (count.get() == 0) {
@@ -63,11 +71,16 @@ public class BlockingQueue {
                 notEmpty.await();
             }
             item = dequeue();
+            c = count.getAndDecrement();
+            if (c - 1 > 0) {
+                notEmpty.signal();
+            }
         } finally {
             takeLock.unlock();
         }
         // 唤醒所有的消费者线程 防止死锁
-        signNotFull();
+        if (c ==  items.length)
+            signNotFull();
         return item;
     }
 
@@ -86,7 +99,6 @@ public class BlockingQueue {
         if (++putIndex == items.length) {
             putIndex = 0;
         }
-        count.getAndIncrement();
     }
 
     private Object dequeue() {
@@ -95,7 +107,6 @@ public class BlockingQueue {
         if (++takeIndex == items.length) {
             takeIndex = 0;
         }
-        count.getAndDecrement();
         return item;
     }
 }
